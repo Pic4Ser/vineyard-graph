@@ -1,0 +1,42 @@
+<html>
+<body>
+<script src="svg.js"></script>
+<script src="svg.draggy.js"></script>
+<script src="svg.connectable.js"></script>
+<div class="graph"></div>
+<script>
+    window.addEventListener("load", function () {
+        var svg = new SVG(document.querySelector(".graph")).size("100%", 500);
+        var links = svg.group();
+        var markers = svg.group();
+        var nodes = svg.group();
+
+        var g1 = nodes.group().translate(300, 100).draggy();
+        g1.circle(30).fill("#FF0000");
+
+        var g2 = nodes.group().translate(100, 100).draggy();
+        g2.circle(30).fill("#FF0000");
+
+        var g3 = nodes.group().translate(200, 300).draggy();
+        g3.circle(30).fill("#FF0000");
+
+        var g1_g2 = g1.connectable({
+            container: links,
+            markers: markers
+        }, g2);
+        g1_g2.setLineColor("#FF0000");
+        console.dir(g1_g2);
+        g1_g2.line.stroke({width: 3});
+
+        var g2_g3 = g2.connectable({
+            container: links,
+            markers: markers
+        }, g3);
+        g2_g3.setLineColor("#FF0000");
+        console.dir(g1_g2);
+        g2_g3.line.stroke({width: 3});
+
+    });
+</script>
+</body>
+</html>

@@ -1,0 +1,58 @@
+<html>
+<head></head>
+<body>
+
+<canvas id="canvas" width="954" height="968"></canvas>
+<div>
+  <img id="source" src="vineyard.jpg" width="954" height="968">
+</div>
+
+<script>
+
+var canvas = document.getElementById('canvas');
+var ctx = canvas.getContext('2d');
+
+var image = new Image(60, 60);   // using optional size for image
+image.onload = drawImageActualSize; // draw when image has loaded
+
+// load an image of intrinsic size 300x227 in CSS pixels
+image.src = 'vineyard.jpg';
+
+function drawImageActualSize() {
+  // use the intrinsic size of image in CSS pixels for the canvas element
+  canvas.width = this.naturalWidth;
+  canvas.height = this.naturalHeight;
+
+  // will draw the image as 300x227 ignoring the custom size of 60x45
+  // given in the constructor
+  ctx.drawImage(this, 0, 0);
+}
+
+
+canvas.addEventListener("click", function(e) {
+     getPosition(e); 
+});
+
+var pointSize = 3;
+
+function getPosition(event){
+     var rect = canvas.getBoundingClientRect();
+     var x = event.clientX - rect.left;
+     var y = event.clientY - rect.top;
+        
+     drawCoordinates(x,y);
+}
+
+function drawCoordinates(x,y){	
+    console.log(x,y);
+    ctx.fillStyle = "#ff2626"; // Red color
+
+    ctx.beginPath();
+    ctx.arc(x, y, pointSize, 0, Math.PI * 2, true);
+    ctx.fill();
+}
+
+</script>
+</body>
+</html>
+

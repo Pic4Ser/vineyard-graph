@@ -1,0 +1,104 @@
+<html>
+<head>
+<script src="jquery-3.3.1.js"></script>
+<script src="svg.js"></script>
+<!-- <script src="svg.draggable.js"></script> -->
+<script src="svg.draggy.js"></script>
+<!-- https://github.com/jillix/svg.connectable.js/ -->
+<script src="svg.connectable.js"></script>
+<style>
+#drawing { border: 1px solid red; }
+.btn.active { color: white; background-color: black; }
+</style>
+</head>
+<body>
+  <p>
+  <input type="button" class="btn" value="Delete" id="deleteBtn"/>
+  <input type="button" class="btn" value="Insert" id="insertBtn"/>
+  <input type="button" class="btn" value="Connect" id="connectBtn"/>
+  </p>
+  <div id="drawing" width="500" height="500"></div>
+<script>
+
+var drawing = document.getElementById("drawing");
+var draw = SVG('drawing'); // .size('100%', '100%');
+var circleSize = 10;
+var image = draw.image('vineyard.jpg').loaded(function(loader) {
+  let r = loader.width/loader.height;
+  let height = 720;
+  this.size(r*loader.height, height);
+  draw.size(r*loader.height, height);
+})
+
+let buttons = $(".btn");
+buttons.click(function(ev) { 
+  let active = $(this).hasClass("active");
+  if(!active) { buttons.removeClass("active"); $(this).addClass("active"); }
+  else  $(this).removeClass("active"); 
+});
+ 
+let circles = [];
+
+let connector = [], connections = [];
+var links = draw.group();
+var markers = draw.group();
+
+$(drawing).click(function(ev) {
+  if($("#insertBtn").hasClass("active")) {
+    var div = drawing.getBoundingClientRect();
+    var x = ev.clientX - div.left;
+    var y = ev.clientY - div.top;
+    console.log(ev.clientX, ev.clientY);
+
+    var c = draw.group().translate(x-circleSize/2,y-circleSize/2);
+    c.circle(circleSize).fill("#FF0600");
+    // var c = draw.circle(circleSize, circleSize).attr({ fill: '#f06', cx: x, cy: y })
+    circles.push(c); $(c).addClass("crcl");
+    console.dir(c);
+/*
+    c.draggy();
+    c.on('dragstart', function(e){
+      $(".btn").removeClass("active");
+      e.preventDefault();
+      // no other events are bound
+      // drag was completely prevented
+    })
+*/
+    $(c.node).click(function(ev) {
+      console.dir($("#deleteBtn"));
+      if($("#deleteBtn").hasClass("active")) {
+        $(this).remove();
+      }
+      if($("#connectBtn").hasClass("active")) {
+        let conn = connector.pop();
+        if(conn) { 
+        	console.log("Connect: ", this, conn); 
+		var connection = SVG.adopt(this).connectable({
+			container: links, markers: markers
+        		}, SVG.adopt(conn));
+        	connection.setLineColor("#FF0000");
+        	console.dir(connection);
+        	connection.line.stroke({width: 3});
+        }
+	else { connector.push(this); console.log("Save point: ", this); }
+      }
+    });
+  }
+  if($("#connectBtn").hasClass("active")) {
+  }
+});
+
+/*
+  c.click(function(event) {
+    console.dir(ctrlKeyPressed);
+    if(ctrlKeyPressed) {
+      this.remove();
+    }
+    event.stopPropagation();
+  });
+*/
+
+
+</script>
+</body>
+</html>
