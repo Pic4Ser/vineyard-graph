@@ -49,7 +49,7 @@
           let c = createNode({ x: n.pos[0], y: n.pos[1] })
           importedNodes[n.id] = c.node;
           $(c.node).click(function (ev) {
-            nodeClickHandlers(this, ev, c)
+            setupNodeCBs(this, ev, c)
           });
         })
         data.links.forEach((l) => {
@@ -81,19 +81,17 @@
     let graphLinks = [];
 
     $('#exportBtn').click((el) => {
-      // set node cnt from 0 to N
       let progressiveCounter = 0;
       for (k in nodes) { nodes[k].cnt = progressiveCounter++; }
-
       graphNodes = Object.entries(nodes).reduce(function (json, pair) {
         const [key, value] = pair;
         let nodeLetter = "";
-        if ($(value.svg.node).hasClass("vx")) nodeLetter += "A";
-        if ($(value.svg.node).hasClass("tx")) nodeLetter += "B";
+        if ($(value.circle.node).hasClass("vx")) nodeLetter += "A";
+        if ($(value.circle.node).hasClass("tx")) nodeLetter += "B";
         json.push({
-          id: value.cnt, pos: [value.svg.x(), value.svg.y()], nodeLetter: nodeLetter,
-          vx: $(value.svg.node).hasClass("vx"),
-          tx: $(value.svg.node).hasClass("tx")
+          id: value.cnt, pos: [value.pos.x, value.pos.y], nodeLetter: nodeLetter,
+          vx: $(value.circle.node).hasClass("vx"),
+          tx: $(value.circle.node).hasClass("tx")
         });
         // console.log("tx", $(value.circle.node).hasClass("tx"), "vx", $(value.circle.node).hasClass("vx"))
         // console.dir(value.circle.node);
@@ -102,18 +100,19 @@
       graphLinks = Object.entries(edges).reduce(function (json, pair) {
         const [key, value] = pair;
         const n0 = nodes[value.nodes[0]]; const n1 = nodes[value.nodes[1]];
-        const dist = value.svg.connector.node.getTotalLength();
+        const dist = Math.hypot(n0.pos.x - n1.pos.x, n0.pos.y - n1.pos.y);
         json.push({ source: n0.cnt, target: n1.cnt, weight: dist });
+        console.log(dist, value.connection.connector.node.getTotalLength());
         return json;
       }, []);
 
-      let exportObj = {
+      downloadObjectAsJson({
         directed: false, multigraph: false, graph: {},
         nodes: graphNodes, links: graphLinks
-      };
-      downloadObjectAsJson(exportObj, "graph-export");
+      }, "graph-export");
 
-      console.dir(exportObj);
+      console.dir(graphNodes);
+      console.dir(graphLinks);
     })
 
     let buttons = $(".btn");
@@ -141,26 +140,26 @@
       var c = draw.group().translate(x, y).draggy(dragFn);
       c.circle(circleSize).fill("#FF0600");
       // var c = draw.circle(circleSize, circleSize).attr({ fill: '#f06', cx: x, cy: y })
-      let node = { svg: c, cnt: gid, cssid: c.node.id, edges: [] }; gid++;
-      nodes[node.cssid] = node; $(c).addClass("node");
-      console.dir(node);
+      var point = { circle: c, cnt: gid, cssid: c.node.id, id: String("n" + gid).padStart(2, '0'), pos: { x: x, y: y }, edges: [] }; gid++;
+      nodes[point.cssid] = point; $(c).addClass("crcl");
+      console.dir(point);
 
       return c;
     }
 
     function createLink(el, conn) {
       var connection = SVG.adopt(el).connectable({
-        container: links, markers: markers
-      }, SVG.adopt(conn));
-      connection.connector.attr({ 'stroke-width': 3, 'stroke': '#FF0600' });
-      $(connection.connector.node).click(function (ev) { $(this).remove(); console.dir(this); delete edges[this.id]; });
-      var edge = { svg: connection, cnt: gid, cssid: connection.connector.node.id, nodes: [el.id, conn.id] }; gid++;
-      nodes[el.id].edges.push(edge);
-      nodes[conn.id].edges.push(edge);
-      edges[edge.cssid] = edge;
+            container: links, markers: markers
+          }, SVG.adopt(conn));
+          connection.connector.attr({ 'stroke-width': 3, 'stroke': '#FF0600' });
+          $(connection.connector.node).click(function (ev) { $(this).remove(); console.dir(this); delete edges[this.id]; });
+          var edge = { connection: connection, cnt: gid, cssid: connection.connector.node.id, id: String("e" + gid).padStart(2, '0'), nodes: [el.id, conn.id] }; gid++;
+          nodes[el.id].edges.push(edge);
+          nodes[conn.id].edges.push(edge);
+          edges[edge.cssid] = edge;
     }
 
-    function nodeClickHandlers(el, ev, c) {
+    function setupNodeCBs(el, ev, c) {
 
       console.dir($("#deleteBtn"));
       if ($("#deleteBtn").hasClass("active")) {
@@ -174,7 +173,7 @@
         let conn = connector.pop();
         if (conn) {
           console.log("Connect: ", el, conn);
-          createLink(el, conn);
+          createLink(el,conn);
         }
         else { connector.push(el); console.log("Save point: ", el); }
       }
@@ -206,11 +205,11 @@
       if ($("#insertBtn").hasClass("active")) {
         let c = createNode(ev)
         // $(c.node.firstChild).click(function (ev) {
-        c.on('dragend', function (event) {
-          console.dir(event);
-        });
+          c.on('dragend', function(event) {
+        console.dir(event);
+      });
         $(c.node).click(function (ev) {
-          nodeClickHandlers(this, ev, c)
+          setupNodeCBs(this, ev, c)
         });
       }
     });
