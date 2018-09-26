@@ -22,11 +22,12 @@
     <input type="button" class="btn" value="Insert" id="insertBtn" />
     <input type="button" class="btn" value="Connect" id="connectBtn" />
     <input type="button" class="btn" value="Drag" id="dragBtn" />
-    <input type="button" class="btn" value="Export" id="exportBtn" />
-    <input type="button" class="btn" value="Import" id="importBtn" />
     <input type="button" class="btn" value="TX" id="txBtn" />
     <input type="button" class="btn" value="VX" id="vxBtn" />
-
+    --
+    <input type="button" class="btn" value="Export" id="exportBtn" />
+    <input type="button" class="btn" value="Import" id="importBtn" />
+    <input type="text" value="graph" id="filenameText" />
   </p>
   <div id="drawing" width="500" height="500"></div>
   <script>
@@ -42,11 +43,20 @@
     }
 
     $('#importBtn').click(function () {
-      $.getJSON("graph-import.json", function (data) {
+      let fname = $('#filenameText').val() + ".json"
+      $.getJSON(fname, function (data) {
         let importedNodes = [];
         data.nodes.forEach((n) => {
           console.dir(n);
           let c = createNode({ x: n.pos[0], y: n.pos[1] })
+          if(n.tx) { 
+            SVG.adopt(c.node.firstChild).stroke({ color: '#FFFFFF', width: 1 })
+            $(c.node).addClass("tx")
+          }
+          if(n.vx) { 
+            SVG.adopt(c.node.firstChild).fill({ color: '#00FF00' })
+            $(c.node).addClass("vx")
+          }
           importedNodes[n.id] = c.node;
           $(c.node).click(function (ev) {
             nodeClickHandlers(this, ev, c)
@@ -111,7 +121,8 @@
         directed: false, multigraph: false, graph: {},
         nodes: graphNodes, links: graphLinks
       };
-      downloadObjectAsJson(exportObj, "graph-export");
+      let fname = $('#filenameText').val()
+      downloadObjectAsJson(exportObj, fname);
 
       console.dir(exportObj);
     })
